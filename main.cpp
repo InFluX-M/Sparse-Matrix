@@ -119,7 +119,36 @@ public:
 
 };
 
+
+void read(LinkedList<int> Row[], LinkedList<int> Collumn[], string pathCSV)
+{
+    ifstream fin;
+    string line;
+    int i=0;
+    fin.open(pathCSV);
+    while(i<10)
+    {
+        fin>>line;
+        stringstream s(line);
+        string T;
+        int j=0;
+
+        while(j<5 && getline(s, T, ','))
+        {
+            int num = stoi(T);
+            if(num != 0)
+            {   
+                LinkedList<int>::Node* newNode = new LinkedList<int>::Node(i, j, num);
+                Row[i].addToRow(newNode, j);
+                Collumn[j].addToCollumn(newNode, i);
+            }
+            j++;
+        }
+        i++;
+    }
+}
+
 int main()
 {
-    return 0;
+    
 }
