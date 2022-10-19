@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+bool statue;
+
 template <typename T>
 class LinkedList
 {
@@ -126,14 +128,13 @@ void read(LinkedList<int> Row[], LinkedList<int> Collumn[], string pathCSV)
     string line;
     int i=0;
     fin.open(pathCSV);
-    while(i<10)
+    while(fin >> line)
     {
-        fin>>line;
         stringstream s(line);
         string T;
         int j=0;
 
-        while(j<5 && getline(s, T, ','))
+        while(getline(s, T, ','))
         {
             int num = stoi(T);
             if(num != 0)
@@ -150,5 +151,15 @@ void read(LinkedList<int> Row[], LinkedList<int> Collumn[], string pathCSV)
 
 int main()
 {
-    
+    string pathCSV = "M(45,78).csv";
+    int nRow = 45;
+    int nCollumn = 78;
+
+    statue = true;
+    LinkedList<int>* Row = new LinkedList<int>[nRow];
+    statue = false;
+    LinkedList<int>* Collumn = new LinkedList<int>[nCollumn];
+
+    read(Row, Collumn, pathCSV);
+    return 0;
 }
