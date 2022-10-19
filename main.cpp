@@ -11,26 +11,26 @@ public:
         int row;
         int collumn;
         int value;
-        Node* next;
-        Node* prev;
+        Node* nextRow;
+        Node* nextCollumn;
 
     public:
-        Node(int row, int collumn, int value, Node* next = nullptr, Node* prev = nullptr)
+        Node(int row, int collumn, int value, Node* nextRow = nullptr, Node* nextCollumn = nullptr)
         {
             this->row = row;
             this->collumn = collumn;
             this->value = value;
-            this->next = next;
-            this->prev = prev;
+            this->nextRow = nextRow;
+            this->nextCollumn = nextCollumn;
         }
 
-        void setNext(Node* next) {this->next = next;}
-        void setPrev(Node* prev) {this->prev = prev;}
+        void setNextRow(Node* nextRow) {this->nextRow = nextRow;}
+        void setNextCollumn(Node* nextCollumn) {this->nextCollumn = nextCollumn;}
         void setRow(int row) {this->row = row;}
         void setCollumn(int collumn) {this->collumn = collumn;}
         void setValue(int value) {this->value = value;}
-        Node* getNext() {return this->next;}
-        Node* getPrev() {return this->prev;}
+        Node* getNextRow() {return nextRow;}
+        Node* getNextCollumn() {return nextCollumn;}
         int getRow() {return this->row;}
         int getCollumn() {return this->collumn;}
         int getValue() {return this->value;}
@@ -42,10 +42,16 @@ public:
 
     LinkedList()
     {
-        header = new Node(-1, -1, 100);
-        tailer = new Node(-1, -1, 100);
-        header->setNext(tailer);
-        tailer->setPrev(header);
+        header = new Node(100, 100, 100);
+        tailer = new Node(100, 100, 100);
+        if(statue)
+        {
+            header->setNextCollumn(tailer);
+        }
+        else
+        {
+            header->setNextRow(tailer);
+        }
         size = 0;
     }
 
@@ -56,53 +62,64 @@ public:
     Node* getTailer() {return this->tailer;}
     int getSize() {return this->size;}
 
-    void remove(Node* node)
+    void removeInRow(Node* prev, Node* node)
     {
-        node->getPrev()->setNext(node->getNext());
-        node->getNext()->setPrev(node->getPrev());
+        prev->nextCollumn(node->nextCollumn);
         delete node;
         decreamentSize();
     }
-    void add(Node* newNode, Node* prev, Node* next)
+    void removeInCollumn(Node* prev, Node* node)
     {
-        newNode->setNext(next);
-        newNode->setPrev(prev);
-        prev->setNext(newNode);
-        next->setPrev(newNode);
-        increamentSize();
+        prev->nextRow(node->nextRow);
+        delete node;
+        decreamentSize();
     }
 
     void addToRow(Node* newNode, int j)
     {
-        Node* t = this->getHeader()->getNext();
+        Node* t = this->getHeader()->getNextCollumn();
+        Node* prev = this->getHeader();
 
         while (t != this->getTailer())
         {
-            if(t->getCollumn() < j) t = t->getNext();
+            if(t->getCollumn() < j)
+            {
+                t = t->getNextCollumn();
+                prev = prev->getNextCollumn();
+            } 
             else break;
         }
 
-        add(newNode, t->getPrev(), t);
+        newNode->setNextCollumn(t);
+        prev->setNextCollumn(newNode);
+        increamentSize();
     }
 
     void addToCollumn(Node* newNode, int i)
     {
-        Node* t = this->getHeader()->getNext();
-
+        Node* t = this->getHeader()->getNextRow();
+        Node* prev = this->getHeader();
         while (t != this->getTailer())
         {
-            if(t->getRow() < i) t = t->getNext();
-            else break;
+            if(t->getRow() < i)
+            {
+                t = t->getNextRow();
+                prev = prev->getNextRow();
+            } 
+            else
+            {
+                break;
+            }
         }
 
-        add(newNode, t->getPrev(), t);
+        newNode->setNextRow(t);
+        prev->setNextRow(newNode);
+        increamentSize();
     }
 
 };
 
-
 int main()
 {
-    
     return 0;
 }
