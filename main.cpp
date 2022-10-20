@@ -7,17 +7,15 @@ template <typename T>
 class Matrix
 {
 public:
-    int size;
-
     class Node
     {
-    public:
         int row;
         int collumn;
         T value;
         Node *nextRow;
         Node *nextCollumn;
 
+    public:
         Node(int row, int collumn, T value, Node *nextRow = nullptr, Node *nextCollumn = nullptr)
         {
             this->row = row;
@@ -39,25 +37,24 @@ public:
         T getValue() { return this->value; }
     };
 
+private:
     class LinkedList
     {
-    public:
+    private:
         Node *header;
         Node *tailer;
         int size;
+
+    public:
 
         LinkedList()
         {
             header = new Node(100, 100, 100);
             tailer = new Node(100, 100, 100);
-            if (statue)
-            {
-                header->setNextCollumn(tailer);
-            }
-            else
-            {
-                header->setNextRow(tailer);
-            }
+
+            if (statue) header->setNextCollumn(tailer);
+            else header->setNextRow(tailer);
+            
             size = 0;
         }
 
@@ -93,8 +90,7 @@ public:
                     t = t->getNextCollumn();
                     prev = prev->getNextCollumn();
                 }
-                else
-                    break;
+                else break;
             }
 
             newNode->setNextCollumn(t);
@@ -113,10 +109,7 @@ public:
                     t = t->getNextRow();
                     prev = prev->getNextRow();
                 }
-                else
-                {
-                    break;
-                }
+                else break;   
             }
 
             newNode->setNextRow(t);
@@ -125,10 +118,39 @@ public:
         }
     };
 
+    int size;
     int nRow;
     int nCollumn;
     LinkedList *Row;
     LinkedList *Collumn;
+
+    Node *accessNodeInRow(int i, int j)
+    {
+        Node *t = Row[i].getHeader();
+
+        while (t->getNextCollumn() != Row[i].getTailer())
+        {
+            if (t->getNextCollumn()->getCollumn() == j) return t;
+            t = t->getNextCollumn();
+        }
+
+        return nullptr;
+    }
+
+    Node *accessNodeInCollumn(int i, int j)
+    {
+        Node *t = Collumn[j].getHeader();
+
+        while (t->getNextRow() != Collumn[j].getTailer())
+        {
+            if (t->getNextRow()->getRow() == i) return t;
+            t = t->getNextRow();
+        }
+
+        return nullptr;
+    }
+
+public:
 
     Matrix(int nRow, int nCollumn)
     {
@@ -143,55 +165,42 @@ public:
 
     LinkedList getRow(int i) { return Row[i]; };
     LinkedList getCol(int j) { return Collumn[j]; };
+    int getNRow() { return nRow; }
+    int getNCol() { return nCollumn; }
+    void setSize(int size) { this->size = size; }
+    void incrementSize() { this->size++; }
+    void decrementSize() { this->size--; }
+    int getSize() { return size; }
 
-    Node *accessNodeInRow(int i, int j)
+    bool insertNode(int i, int j, T value)
     {
-        Node *t = Row[i].getHeader();
-
-        while (t->getNextCollumn() != Row[i].getTailer())
-        {
-            if (t->getNextCollumn()->getCollumn() == j)
-                return t;
-            t = t->getNextCollumn();
-        }
-
-        return nullptr;
-    }
-    Node *accessNodeInCollumn(int i, int j)
-    {
-        Node *t = Collumn[j].getHeader();
-
-        while (t->getNextRow() != Collumn[j].getTailer())
-        {
-            if (t->getNextRow()->getRow() == i)
-                return t;
-            t = t->getNextRow();
-        }
-
-        return nullptr;
-    }
-
-    void insertNode(int i, int j, T value)
-    {
+        if(i>nRow || j>nCollumn) return false;
         Node *newNode = new Node(i, j, value);
         this->Row[i].addToRow(newNode, j);
         this->Collumn[j].addToCollumn(newNode, i);
         size++;
+        return true;
     }
 
-    void deleteNode(int i, int j)
+    bool deleteNode(int i, int j)
     {
         Node *node1 = accessNodeInRow(i, j);
+        if(node1 == nullptr) return false;
         this->Row[i].removeInRow(node1, node1->getNextCollumn());
         Node *node2 = accessNodeInCollumn(i, j);
+        if(node2 == nullptr) return false;
         this->Collumn[j].removeInCollumn(node2, node2->getNextRow());
         size--;
+        return true;
     }
 
-    void updateNode(int i, int j, int value)
+    bool updateNode(int i, int j, int value)
     {
-        Node *node = accessNodeInRow(i, j)->getNextCollumn();
+        Node *node = accessNodeInRow(i, j);
+        if(node == nullptr) return false;
+        node = node->getNextCollumn();
         node->setValue(value);
+        return true;
     }
 
     bool search(int value)
@@ -209,34 +218,61 @@ public:
 
         return false;
     }
+
+    void printBasedRow()
+    {
+        cout << "Based Row: "
+             << "\n";
+        cout << "----------------------------------------\n";
+        for (int i = 0; i < nRow; i++)
+        {
+            cout << i << ": ";
+            Node *t = Row[i].getHeader()->getNextCollumn();
+            while (t != Row[i].getTailer())
+            {
+                cout << "[" << t->getCollumn() << ":" << t->getValue() << "]  ";
+                t = t->getNextCollumn();
+            }
+            cout << "\n";
+        }
+        cout << "----------------------------------------\n";
+    }
+
+    void printBasedCollumn()
+    {
+        cout << "Based Collumn: "
+             << "\n";
+        cout << "----------------------------------------\n";
+        for (int i = 0; i < nCollumn; i++)
+        {
+            cout << i << ": ";
+            Node *t = Collumn[i].getHeader()->getNextRow();
+            while (t != Collumn[i].getTailer())
+            {
+                cout << "[" << t->getRow() << ":" << t->getValue() << "]  ";
+                t = t->getNextRow();
+            }
+            cout << "\n";
+        }
+        cout << "----------------------------------------\n";
+    }
 };
 
 class SparseMatrix
 {
-public:
     int **compactMatrix;
-    SparseMatrix(Matrix<int> *matrix)
-    {
-        compactMatrix = new int *[matrix->size + 1];
-        for (int i = 0; i <= matrix->size; i++)
-        {
-            compactMatrix[i] = new int[3];
-        }
-
-        complete(matrix);
-    }
 
     void complete(Matrix<int> *matrix)
     {
-        compactMatrix[0][0] = matrix->nRow;
-        compactMatrix[0][1] = matrix->nCollumn;
-        compactMatrix[0][2] = matrix->size;
+        compactMatrix[0][0] = matrix->getNRow();
+        compactMatrix[0][1] = matrix->getNCol();
+        compactMatrix[0][2] = matrix->getSize();
 
         int r = 1;
-        for (int i = 0; i < matrix->nRow; i++)
+        for (int i = 0; i < matrix->getNRow(); i++)
         {
-            Matrix<int>::Node *t = matrix->Row[i].getHeader()->getNextCollumn();
-            while (t != matrix->Row[i].getTailer())
+            Matrix<int>::Node *t = matrix->getRow(i).getHeader()->getNextCollumn();
+            while (t != matrix->getRow(i).getTailer())
             {
                 int j = t->getCollumn();
                 compactMatrix[r][0] = i;
@@ -248,15 +284,33 @@ public:
         }
     }
 
+public:
+    SparseMatrix(Matrix<int> *matrix)
+    {
+        compactMatrix = new int *[matrix->getSize() + 1];
+        for (int i = 0; i <= matrix->getSize(); i++)
+        {
+            compactMatrix[i] = new int[3];
+        }
+
+        complete(matrix);
+    }
+
     void print()
     {
-        for (int i = 0; i < compactMatrix[0][2] + 1; i++)
+        cout << "Based Sparse Matrix Array: "<< "\n";
+        cout << "----------------------------------------\n";
+        cout << "nRow: " << compactMatrix[0][0] << ", nCol: " << compactMatrix[0][1] << ", nElement: " << compactMatrix[0][2] << "\n";
+
+        for (int i = 1; i < compactMatrix[0][2] + 1; i++)
         {
-            cout << compactMatrix[i][0] << " ";
-            cout << compactMatrix[i][1] << " ";
-            cout << compactMatrix[i][2] << "\n";
+            cout << "[" << compactMatrix[i][0] << ", ";
+            cout << compactMatrix[i][1] << ": ";
+            cout << compactMatrix[i][2] << "]\n";
         }
+        cout << "----------------------------------------\n";
     }
+
 };
 
 void read(Matrix<int> *matrix, string pathCSV)
@@ -279,7 +333,7 @@ void read(Matrix<int> *matrix, string pathCSV)
                 Matrix<int>::Node *newNode = new Matrix<int>::Node(i, j, num);
                 matrix->getRow(i).addToRow(newNode, j);
                 matrix->getCol(j).addToCollumn(newNode, i);
-                matrix->size++;
+                matrix->incrementSize();
             }
             j++;
         }
@@ -289,6 +343,14 @@ void read(Matrix<int> *matrix, string pathCSV)
 
 int main()
 {
+    Matrix<int> *matrix = new Matrix<int>(10, 5);
+    read(matrix, "M(10,5).csv");
+
+    matrix->printBasedRow();
+    matrix->printBasedCollumn();
+
+    SparseMatrix *sparseMatrix = new SparseMatrix(matrix);
+    sparseMatrix->print();
 
     return 0;
 }
