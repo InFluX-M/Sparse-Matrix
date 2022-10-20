@@ -7,11 +7,11 @@ template <typename T>
 class Matrix
 {
 public:
+    int size;
 
     class Node
     {
     public:
-
         int row;
         int collumn;
         T value;
@@ -138,6 +138,7 @@ public:
         this->Row = new LinkedList[nRow];
         statue = false;
         this->Collumn = new LinkedList[nCollumn];
+        size = 0;
     }
 
     LinkedList getRow(int i) { return Row[i]; };
@@ -175,6 +176,7 @@ public:
         Node *newNode = new Node(i, j, value);
         this->Row[i].addToRow(newNode, j);
         this->Collumn[j].addToCollumn(newNode, i);
+        size++;
     }
 
     void deleteNode(int i, int j)
@@ -183,6 +185,7 @@ public:
         this->Row[i].removeInRow(node1, node1->getNextCollumn());
         Node *node2 = accessNodeInCollumn(i, j);
         this->Collumn[j].removeInCollumn(node2, node2->getNextRow());
+        size--;
     }
 
     void updateNode(int i, int j, int value)
@@ -206,10 +209,57 @@ public:
 
         return false;
     }
-
 };
 
-void read(Matrix<int>* matrix, string pathCSV)
+class SparseMatrix
+{
+public:
+    int **compactMatrix;
+    SparseMatrix(Matrix<int> *matrix)
+    {
+        compactMatrix = new int *[matrix->size + 1];
+        for (int i = 0; i <= matrix->size; i++)
+        {
+            compactMatrix[i] = new int[3];
+        }
+
+        complete(matrix);
+    }
+
+    void complete(Matrix<int> *matrix)
+    {
+        compactMatrix[0][0] = matrix->nRow;
+        compactMatrix[0][1] = matrix->nCollumn;
+        compactMatrix[0][2] = matrix->size;
+
+        int r = 1;
+        for (int i = 0; i < matrix->nRow; i++)
+        {
+            Matrix<int>::Node *t = matrix->Row[i].getHeader()->getNextCollumn();
+            while (t != matrix->Row[i].getTailer())
+            {
+                int j = t->getCollumn();
+                compactMatrix[r][0] = i;
+                compactMatrix[r][1] = j;
+                compactMatrix[r][2] = t->getValue();
+                r++;
+                t = t->getNextCollumn();
+            }
+        }
+    }
+
+    void print()
+    {
+        for (int i = 0; i < compactMatrix[0][2] + 1; i++)
+        {
+            cout << compactMatrix[i][0] << " ";
+            cout << compactMatrix[i][1] << " ";
+            cout << compactMatrix[i][2] << "\n";
+        }
+    }
+};
+
+void read(Matrix<int> *matrix, string pathCSV)
 {
     ifstream fin;
     string line;
@@ -229,6 +279,7 @@ void read(Matrix<int>* matrix, string pathCSV)
                 Matrix<int>::Node *newNode = new Matrix<int>::Node(i, j, num);
                 matrix->getRow(i).addToRow(newNode, j);
                 matrix->getCol(j).addToCollumn(newNode, i);
+                matrix->size++;
             }
             j++;
         }
@@ -238,6 +289,6 @@ void read(Matrix<int>* matrix, string pathCSV)
 
 int main()
 {
-    
+
     return 0;
 }
