@@ -67,13 +67,13 @@ private:
 
         void removeInRow(Node *prev, Node *node)
         {
-            prev->setNextCollumn(node->nextCollumn);
+            prev->setNextCollumn(node->getNextCollumn());
             decreamentSize();
         }
 
         void removeInCollumn(Node *prev, Node *node)
         {
-            prev->setNextRow(node->nextRow);
+            prev->setNextRow(node->getNextRow());
             delete node;
             decreamentSize();
         }
@@ -124,6 +124,40 @@ private:
     LinkedList *Row;
     LinkedList *Collumn;
 
+
+public:
+
+    Matrix(int nRow, int nCollumn)
+    {
+        this->nRow = nRow;
+        this->nCollumn = nCollumn;
+        statue = true;
+        this->Row = new LinkedList[nRow];
+        statue = false;
+        this->Collumn = new LinkedList[nCollumn];
+        size = 0;
+    }
+
+    LinkedList getRow(int i) { return Row[i]; };
+    LinkedList getCol(int j) { return Collumn[j]; };
+    int getNRow() { return nRow; }
+    int getNCol() { return nCollumn; }
+    void setSize(int size) { this->size = size; }
+    void incrementSize() { this->size++; }
+    void decrementSize() { this->size--; }
+    int getSize() { return size; }
+
+    Node* accessNodeByRowCollumn(int i, int j)
+    {
+        Node *t = Row[i].getHeader()->getNextCollumn();
+        while (t != Row[i].getTailer())
+        {
+            if (t->getCollumn() == j) return t;
+            t = t->getNextCollumn();
+        }
+        return nullptr;
+    }
+
     Node *accessNodeInRow(int i, int j)
     {
         Node *t = Row[i].getHeader();
@@ -149,28 +183,6 @@ private:
 
         return nullptr;
     }
-
-public:
-
-    Matrix(int nRow, int nCollumn)
-    {
-        this->nRow = nRow;
-        this->nCollumn = nCollumn;
-        statue = true;
-        this->Row = new LinkedList[nRow];
-        statue = false;
-        this->Collumn = new LinkedList[nCollumn];
-        size = 0;
-    }
-
-    LinkedList getRow(int i) { return Row[i]; };
-    LinkedList getCol(int j) { return Collumn[j]; };
-    int getNRow() { return nRow; }
-    int getNCol() { return nCollumn; }
-    void setSize(int size) { this->size = size; }
-    void incrementSize() { this->size++; }
-    void decrementSize() { this->size--; }
-    int getSize() { return size; }
 
     bool insertNode(int i, int j, T value)
     {
@@ -313,7 +325,7 @@ public:
 
 };
 
-void read(Matrix<int> *matrix, string pathCSV)
+void readCSV(Matrix<int> *matrix, string pathCSV)
 {
     ifstream fin;
     string line;
@@ -341,16 +353,144 @@ void read(Matrix<int> *matrix, string pathCSV)
     }
 }
 
+void write(Matrix<int> *matrix)
+{
+	fstream fout;
+	fout.open("SM.csv", ios::out | ios::trunc);
+
+    for (int i = 0; i < matrix->getNRow(); i++)
+    {
+        for(int j = 0; j<matrix->getNCol(); j++)
+        {
+            Matrix<int>::Node* t = matrix->accessNodeByRowCollumn(i, j);
+            if(t != nullptr)
+            {
+                fout << t->getValue();
+            }
+            else
+            {
+                fout << 0;
+            }
+            
+            if(j == matrix->getNCol()-1) fout << "\n";
+            else fout << ",";
+        }
+    }
+}
+
+void panel(Matrix<int> *matrix)
+{
+    cout << 
+    "1- Insert Node\n" <<
+    "2- Delete Node\n" <<
+    "3- Search Value\n" << 
+    "4- Update Node\n" <<
+    "5- Print(Based Row)\n" << 
+    "6- Print(Based Collumn)\n" << 
+    "7- Sparse Matrix Array\n" <<
+    "8- Write CSV\n\n";
+
+    cout << "statement: ";
+    int op;
+    cin >> op;
+
+    int i, j, v;
+
+    switch (op)
+    {
+    case 1:
+        cout << "Row: ";
+        cin >> i;
+        cout << "Collumn: ";
+        cin >> j;
+        cout << "Value: ";
+        cin >> v;
+        
+        if(matrix->insertNode(i, j, v)) cout << "DONE!\n";
+        else cout << "FAIL!\n";
+
+        break;
+    
+    case 2:
+        cout << "Row: ";
+        cin >> i;
+        cout << "Collumn: ";
+        cin >> j;
+
+        if(matrix->deleteNode(i, j)) cout << "DONE!\n";
+        else cout << "FAIL!\n";
+
+        break;
+
+    case 3:
+        cin >> v;
+
+        if(matrix->search(v)) cout << "Find!\n";
+        else cout << "Not Find!\n";
+
+        break;
+
+    case 4:
+        cout << "Row: ";
+        cin >> i;
+        cout << "Collumn: ";
+        cin >> j;
+        cout << "Value: ";
+        cin >> v;
+        
+        if(matrix->updateNode(i, j, v)) cout << "DONE!\n";
+        else cout << "FAIL!\n";
+
+        break;
+
+    case 5:
+        matrix->printBasedRow();
+        break;
+
+    case 6:
+        matrix->printBasedCollumn();
+        break;
+        
+    // case 7:
+    //     SparseMatrix *sparseMatrix = new SparseMatrix(matrix);
+    //     sparseMatrix->print();
+    //     delete sparseMatrix;
+    //     break;
+
+    case 8:
+        write(matrix);
+        break;
+
+    default:
+        break;
+    }
+
+    cout << "\n";
+    panel(matrix);
+}
+
+void mainPanel()
+{
+    cout << "CSV File Name: ";
+    string path;
+    cin >> path;
+
+    cout << "Number of Rows: ";
+    int nRow;
+    cin >> nRow;
+
+    cout << "Number of Collumns: ";
+    int nCol;
+    cin >> nCol;
+
+    Matrix<int> *matrix = new Matrix<int>(nRow, nCol);
+    readCSV(matrix, path);
+
+    panel(matrix);
+}
+
 int main()
 {
-    Matrix<int> *matrix = new Matrix<int>(10, 5);
-    read(matrix, "M(10,5).csv");
-
-    matrix->printBasedRow();
-    matrix->printBasedCollumn();
-
-    SparseMatrix *sparseMatrix = new SparseMatrix(matrix);
-    sparseMatrix->print();
-
+    mainPanel();
     return 0;
 }
