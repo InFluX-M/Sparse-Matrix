@@ -7,6 +7,7 @@ template <typename T>
 class Matrix
 {
 public:
+
     class Node
     {
         int row;
@@ -16,6 +17,7 @@ public:
         Node *nextCollumn;
 
     public:
+
         Node(int row, int collumn, T value, Node *nextRow = nullptr, Node *nextCollumn = nullptr)
         {
             this->row = row;
@@ -67,45 +69,34 @@ public:
     public:
         SparseMatrix(Matrix<int> *matrix)
         {
-            maxSize = matrix->getNCol()*matrix->getNRow() + 1;
+            maxSize = matrix->getNCol() * matrix->getNRow() + 1;
             compactMatrix = new int *[maxSize];
-            for (int i = 0; i < maxSize; i++)
-                compactMatrix[i] = new int[3];
+            for (int i = 0; i < maxSize; i++) compactMatrix[i] = new int[3];
+    
             complete(matrix);
         }
 
         int access(int i, int j, int l, int r)
         {
-            if (l > r)
-                return -1;
+            if (l > r) return -1;
 
             int mid = (l + r) / 2;
 
             if (compactMatrix[mid][0] == i)
             {
-                if (compactMatrix[mid][1] == j)
-                    return mid;
-                else if (compactMatrix[mid][1] > j)
-                {
-                    access(i, j, l, mid - 1);
-                }
-                else if (compactMatrix[mid][2] < j)
-                {
-                    access(i, j, mid + 1, j);
-                }
+                if (compactMatrix[mid][1] == j) return mid;
+                else if (compactMatrix[mid][1] > j) return access(i, j, l, mid - 1);
+                else if (compactMatrix[mid][2] < j) return access(i, j, mid + 1, j);
+                
             }
-            else if (compactMatrix[mid][0] > i)
-            {
-                access(i, j, l, mid - 1);
-            }
-            else
-            {
-                access(i, j, mid + 1, r);
-            }
+            else if (compactMatrix[mid][0] > i) return access(i, j, l, mid - 1);
+            
+            return access(i, j, mid + 1, r);
         }
 
         bool insert(int i, int j, int value)
         {
+            if(i<0 || i>=compactMatrix[0][0] || j<0 || j>=compactMatrix[0][1]) return false;
             compactMatrix[0][2]++;
             compactMatrix[compactMatrix[0][2]] = new int[3];
 
@@ -128,9 +119,7 @@ public:
         bool remove(int i, int j)
         {
             int r = access(i, j, 1, compactMatrix[0][2] + 1);
-
-            if (r == -1)
-                return false;
+            if (r == -1) return false;
 
             while (r != compactMatrix[0][2])
             {
@@ -141,19 +130,15 @@ public:
             }
 
             compactMatrix[0][2]--;
-
             return true;
         }
 
         bool update(int i, int j, int value)
         {
             int r = access(i, j, 1, compactMatrix[0][2] + 1);
-
-            if (r == -1)
-                return false;
+            if (r == -1)return false;
 
             compactMatrix[r][2] = value;
-
             return true;
         }
 
@@ -183,17 +168,15 @@ private:
         int size;
 
     public:
+
         LinkedList()
         {
             header = new Node(100, 100, 100);
             tailer = new Node(100, 100, 100);
-
-            if (statue)
-                header->setNextCollumn(tailer);
-            else
-                header->setNextRow(tailer);
-
             size = 0;
+
+            if (statue) header->setNextCollumn(tailer);
+            else header->setNextRow(tailer);
         }
 
         void setSize(int size) { this->size = size; }
@@ -228,8 +211,7 @@ private:
                     t = t->getNextCollumn();
                     prev = prev->getNextCollumn();
                 }
-                else
-                    break;
+                else break;
             }
 
             newNode->setNextCollumn(t);
@@ -248,8 +230,7 @@ private:
                     t = t->getNextRow();
                     prev = prev->getNextRow();
                 }
-                else
-                    break;
+                else break;
             }
 
             newNode->setNextRow(t);
@@ -265,7 +246,34 @@ private:
     LinkedList *Collumn;
     SparseMatrix *sparseMatrix;
 
+    Node *accessPrevNodeInRow(int i, int j)
+    {
+        Node *t = Row[i].getHeader();
+
+        while (t->getNextCollumn() != Row[i].getTailer())
+        {
+            if (t->getNextCollumn()->getCollumn() == j) return t;
+            t = t->getNextCollumn();
+        }
+
+        return nullptr;
+    }
+
+    Node *accessPrevNodeInCollumn(int i, int j)
+    {
+        Node *t = Collumn[j].getHeader();
+
+        while (t->getNextRow() != Collumn[j].getTailer())
+        {
+            if (t->getNextRow()->getRow() == i) return t;
+            t = t->getNextRow();
+        }
+
+        return nullptr;
+    }
+
 public:
+
     Matrix(int nRow, int nCollumn)
     {
         this->nRow = nRow;
@@ -288,88 +296,49 @@ public:
     void setSparseMatrix() { this->sparseMatrix = new SparseMatrix(this); }
     int getSize() { return size; }
 
-    Node *accessNodeByRowCollumn(int i, int j)
+    Node *accessNode(int i, int j)
     {
         Node *t = Row[i].getHeader()->getNextCollumn();
         while (t != Row[i].getTailer())
         {
-            if (t->getCollumn() == j)
-                return t;
+            if (t->getCollumn() == j) return t;
             t = t->getNextCollumn();
         }
-        return nullptr;
-    }
-
-    Node *accessNodeInRow(int i, int j)
-    {
-        Node *t = Row[i].getHeader();
-
-        while (t->getNextCollumn() != Row[i].getTailer())
-        {
-            if (t->getNextCollumn()->getCollumn() == j)
-                return t;
-            t = t->getNextCollumn();
-        }
-
-        return nullptr;
-    }
-
-    Node *accessNodeInCollumn(int i, int j)
-    {
-        Node *t = Collumn[j].getHeader();
-
-        while (t->getNextRow() != Collumn[j].getTailer())
-        {
-            if (t->getNextRow()->getRow() == i)
-                return t;
-            t = t->getNextRow();
-        }
-
         return nullptr;
     }
 
     bool insertNode(int i, int j, T value)
     {
-        if (i > nRow || j > nCollumn)
-            return false;
+        if (i > nRow || j > nCollumn) return false;
+
         Node *newNode = new Node(i, j, value);
         this->Row[i].addToRow(newNode, j);
         this->Collumn[j].addToCollumn(newNode, i);
         size++;
 
-        sparseMatrix->insert(i, j, value);
-
-        return true;
+        return sparseMatrix->insert(i, j, value);
     }
 
     bool deleteNode(int i, int j)
     {
-        Node *node1 = accessNodeInRow(i, j);
-        if (node1 == nullptr)
-            return false;
+        Node *node1 = accessPrevNodeInRow(i, j);
+        if (node1 == nullptr) return false;
         this->Row[i].removeInRow(node1, node1->getNextCollumn());
-        Node *node2 = accessNodeInCollumn(i, j);
-        if (node2 == nullptr)
-            return false;
+        Node *node2 = accessPrevNodeInCollumn(i, j);
+        if (node2 == nullptr) return false;
         this->Collumn[j].removeInCollumn(node2, node2->getNextRow());
         size--;
 
-        sparseMatrix->remove(i, j);
-
-        return true;
+        return sparseMatrix->remove(i, j);
     }
 
     bool updateNode(int i, int j, int value)
     {
-        Node *node = accessNodeInRow(i, j);
-        if (node == nullptr)
-            return false;
-        node = node->getNextCollumn();
+        Node *node = accessNode(i, j);
+        if (node == nullptr) return false;
         node->setValue(value);
 
-        sparseMatrix->update(i, j, value);
-
-        return true;
+        return sparseMatrix->update(i, j, value);
     }
 
     bool search(int value)
@@ -379,8 +348,7 @@ public:
             Node *t = Row[i].getHeader()->getNextCollumn();
             while (t != Row[i].getTailer())
             {
-                if (t->getValue() == value)
-                    return true;
+                if (t->getValue() == value) return true;
                 t = t->getNextCollumn();
             }
         }
@@ -433,6 +401,7 @@ void readCSV(Matrix<int> *matrix, string pathCSV)
     string line;
     int i = 0;
     fin.open(pathCSV);
+
     while (fin >> line)
     {
         stringstream s(line);
@@ -460,26 +429,18 @@ void readCSV(Matrix<int> *matrix, string pathCSV)
 void write(Matrix<int> *matrix)
 {
     fstream fout;
-    fout.open("SM.csv", ios::out | ios::trunc);
+    fout.open("SM("+to_string(matrix->getNRow())+","+to_string(matrix->getNCol())+").csv", ios::out | ios::trunc);
 
     for (int i = 0; i < matrix->getNRow(); i++)
     {
         for (int j = 0; j < matrix->getNCol(); j++)
         {
-            Matrix<int>::Node *t = matrix->accessNodeByRowCollumn(i, j);
-            if (t != nullptr)
-            {
-                fout << t->getValue();
-            }
-            else
-            {
-                fout << 0;
-            }
-
-            if (j == matrix->getNCol() - 1)
-                fout << "\n";
-            else
-                fout << ",";
+            Matrix<int>::Node *t = matrix->accessNode(i, j);
+            if (t != nullptr) fout << t->getValue();
+            else fout << 0;
+            
+            if (j == matrix->getNCol() - 1) fout << "\n";
+            else fout << ",";
         }
     }
 }
@@ -511,11 +472,8 @@ void panel(Matrix<int> *matrix)
         cout << "Value: ";
         cin >> v;
 
-        if (matrix->insertNode(i, j, v))
-            cout << "DONE!\n";
-        else
-            cout << "FAIL!\n";
-
+        if (matrix->insertNode(i, j, v)) cout << "DONE!\n";
+        else cout << "FAIL!\n";
         break;
 
     case 2:
@@ -524,21 +482,16 @@ void panel(Matrix<int> *matrix)
         cout << "Collumn: ";
         cin >> j;
 
-        if (matrix->deleteNode(i, j))
-            cout << "DONE!\n";
-        else
-            cout << "FAIL!\n";
-
+        if (matrix->deleteNode(i, j)) cout << "DONE!\n";
+        else cout << "FAIL!\n";
         break;
 
     case 3:
+        cout << "Value: ";
         cin >> v;
 
-        if (matrix->search(v))
-            cout << "Find!\n";
-        else
-            cout << "Not Find!\n";
-
+        if (matrix->search(v)) cout << "Find!\n";
+        else cout << "Not Find!\n";
         break;
 
     case 4:
@@ -549,11 +502,8 @@ void panel(Matrix<int> *matrix)
         cout << "Value: ";
         cin >> v;
 
-        if (matrix->updateNode(i, j, v))
-            cout << "DONE!\n";
-        else
-            cout << "FAIL!\n";
-
+        if (matrix->updateNode(i, j, v)) cout << "DONE!\n";
+        else cout << "FAIL!\n";
         break;
 
     case 5:
