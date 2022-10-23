@@ -39,7 +39,7 @@ public:
         T getValue() { return this->value; }
     };
 
-    class SparseMatrix
+    class CompactMatrix
     {
         int maxSize;
         int **compactMatrix;
@@ -48,7 +48,7 @@ public:
 
         int** getCompactMatrix() {return compactMatrix;}
 
-        SparseMatrix(Matrix<int> *matrix)
+        CompactMatrix(Matrix<int> *matrix)
         {
             maxSize = matrix->getNCol() * matrix->getNRow() + 1;
             compactMatrix = new int *[maxSize];
@@ -257,7 +257,7 @@ private:
     int nCollumn;
     LinkedList *Row;
     LinkedList *Collumn;
-    SparseMatrix *sparseMatrix;
+    CompactMatrix *compactMatrix;
 
     Node *accessPrevNodeInRow(int i, int j)
     {
@@ -296,26 +296,26 @@ public:
         statue = false;
         this->Collumn = new LinkedList[nCollumn];
         size = 0;
-        this->sparseMatrix = new SparseMatrix(this);
+        this->compactMatrix = new CompactMatrix(this);
     }
 
     LinkedList getRow(int i) { return Row[i]; };
     LinkedList getCol(int j) { return Collumn[j]; };
-    SparseMatrix *getSparseMatrix() { return sparseMatrix; };
+    CompactMatrix *getCompactMatrix() { return compactMatrix; };
     int getNRow() { return nRow; }
     int getNCol() { return nCollumn; }
     void setSize(int size) { this->size = size; }
     void incrementSize() { this->size++; }
     void decrementSize() { this->size--; }
-    void setSparseMatrix() { this->sparseMatrix = new SparseMatrix(this); }
+    void setSparseMatrix() { this->sparseMatrix = new CompactMatrix(this); }
     int getSize() { return size; }
 
     Node *accessNode(int i, int j)
     {
-        int r = sparseMatrix->access(i, j, 1, sparseMatrix->getCompactMatrix()[0][2] + 1);
+        int r = compactMatrix->access(i, j, 1, compactMatrix->getCompactMatrix()[0][2] + 1);
         if (r == -1) return nullptr;
 
-        if(sparseMatrix->getCompactMatrix()[r][3] < sparseMatrix->getCompactMatrix()[r][4])
+        if(compactMatrix->getCompactMatrix()[r][3] < compactMatrix->getCompactMatrix()[r][4])
         {          
             Node *t = Row[i].getHeader()->getNextCollumn();
             while (t != Row[i].getTailer())
@@ -346,7 +346,7 @@ public:
         int accesscollumn = this->Collumn[j].addToCollumn(newNode, i);
         size++;
 
-        return sparseMatrix->insert(i, j, value, accessRow, accesscollumn);
+        return compactMatrix->insert(i, j, value, accessRow, accesscollumn);
     }
 
     bool deleteNode(int i, int j)
@@ -359,7 +359,7 @@ public:
         this->Collumn[j].removeInCollumn(node2, node2->getNextRow());
         size--;
 
-        return sparseMatrix->remove(i, j);
+        return compactMatrix->remove(i, j);
     }
 
     bool updateNode(int i, int j, int value)
@@ -368,7 +368,7 @@ public:
         if (node == nullptr) return false;
         node->setValue(value);
 
-        return sparseMatrix->update(i, j, value);
+        return compactMatrix->update(i, j, value);
     }
 
     bool search(int value)
@@ -537,7 +537,7 @@ void panel(Matrix<int> *matrix)
         break;
 
     case 7:
-        matrix->getSparseMatrix()->print();
+        matrix->getCompactMatrix()->print();
         break;
 
     case 8:
