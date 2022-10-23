@@ -52,11 +52,13 @@ public:
         {
             maxSize = matrix->getNCol() * matrix->getNRow() + 1;
             compactMatrix = new int *[maxSize];
-            for (int i = 0; i < maxSize; i++) compactMatrix[i] = new int[5];
+            compactMatrix[0] = new int[5];
 
             compactMatrix[0][0] = matrix->getNRow();
             compactMatrix[0][1] = matrix->getNCol();
             compactMatrix[0][2] = matrix->getSize();
+            compactMatrix[0][3] = -1;
+            compactMatrix[0][4] = -1;
         }
 
         int access(int i, int j, int l, int r)
@@ -79,20 +81,21 @@ public:
         bool insert(int i, int j, int value, int accessRow, int accessCol)
         {
             if(i<0 || i>=compactMatrix[0][0] || j<0 || j>=compactMatrix[0][1]) return false;
+
             compactMatrix[0][2]++;
-            compactMatrix[compactMatrix[0][2]] = new int[3];
-
+            compactMatrix[compactMatrix[0][2]] = new int[5];
             int r = compactMatrix[0][2];
-            while (r != 1 && (compactMatrix[r][0] > i || compactMatrix[r][1] > j))
-            {
-                if(i == compactMatrix[r][0]) compactMatrix[r][3]++;
-                else if(j == compactMatrix[r][1]) compactMatrix[r][4]++;
 
-                compactMatrix[r + 1][0] = compactMatrix[r][0];
-                compactMatrix[r + 1][1] = compactMatrix[r][1];
-                compactMatrix[r + 1][2] = compactMatrix[r][2];
-                compactMatrix[r + 1][3] = compactMatrix[r][3];
-                compactMatrix[r + 1][4] = compactMatrix[r][4];
+            while (r > 1 && compactMatrix[r-1][0] > i || (compactMatrix[r-1][0]==i && compactMatrix[r-1][1] > j))
+            {
+                if(i == compactMatrix[r-1][0]) compactMatrix[r-1][3]++;
+                else if(j == compactMatrix[r-1][1]) compactMatrix[r-1][4]++;
+
+                compactMatrix[r][0] = compactMatrix[r-1][0];
+                compactMatrix[r][1] = compactMatrix[r-1][1];
+                compactMatrix[r][2] = compactMatrix[r-1][2];
+                compactMatrix[r][3] = compactMatrix[r-1][3];
+                compactMatrix[r][4] = compactMatrix[r-1][4];
 
                 r--;
             }
@@ -309,7 +312,7 @@ public:
 
     Node *accessNode(int i, int j)
     {
-        int r = sparseMatrix->access(i, j, 0, sparseMatrix->getCompactMatrix()[0][2] + 1);
+        int r = sparseMatrix->access(i, j, 1, sparseMatrix->getCompactMatrix()[0][2] + 1);
         if (r == -1) return nullptr;
 
         if(sparseMatrix->getCompactMatrix()[r][3] < sparseMatrix->getCompactMatrix()[r][4])
@@ -327,7 +330,7 @@ public:
             Node *t = Collumn[j].getHeader()->getNextRow();
             while (t != Collumn[j].getTailer())
             {
-                if (t->getRow() == j) return t;
+                if (t->getRow() == i) return t;
                 t = t->getNextRow();
             }
             return nullptr;
