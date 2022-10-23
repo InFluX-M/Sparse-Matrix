@@ -41,39 +41,22 @@ public:
 
     class SparseMatrix
     {
-        int **compactMatrix;
         int maxSize;
-
-        void complete(Matrix<int> *matrix)
-        {
-            compactMatrix[0][0] = matrix->getNRow();
-            compactMatrix[0][1] = matrix->getNCol();
-            compactMatrix[0][2] = matrix->getSize();
-
-            int r = 1;
-            for (int i = 0; i < matrix->getNRow(); i++)
-            {
-                Matrix<int>::Node *t = matrix->getRow(i).getHeader()->getNextCollumn();
-                while (t != matrix->getRow(i).getTailer())
-                {
-                    int j = t->getCollumn();
-                    compactMatrix[r][0] = i;
-                    compactMatrix[r][1] = j;
-                    compactMatrix[r][2] = t->getValue();
-                    r++;
-                    t = t->getNextCollumn();
-                }
-            }
-        }
+        int **compactMatrix;
 
     public:
+
+        int** getCompactMatrix() {return compactMatrix;}
+
         SparseMatrix(Matrix<int> *matrix)
         {
             maxSize = matrix->getNCol() * matrix->getNRow() + 1;
             compactMatrix = new int *[maxSize];
-            for (int i = 0; i < maxSize; i++) compactMatrix[i] = new int[3];
-    
-            complete(matrix);
+            for (int i = 0; i < maxSize; i++) compactMatrix[i] = new int[5];
+
+            compactMatrix[0][0] = matrix->getNRow();
+            compactMatrix[0][1] = matrix->getNCol();
+            compactMatrix[0][2] = matrix->getSize();
         }
 
         int access(int i, int j, int l, int r)
@@ -86,32 +69,39 @@ public:
             {
                 if (compactMatrix[mid][1] == j) return mid;
                 else if (compactMatrix[mid][1] > j) return access(i, j, l, mid - 1);
-                else if (compactMatrix[mid][2] < j) return access(i, j, mid + 1, j);
-                
+                else if (compactMatrix[mid][2] < j) return access(i, j, mid + 1, j);    
             }
             else if (compactMatrix[mid][0] > i) return access(i, j, l, mid - 1);
             
             return access(i, j, mid + 1, r);
         }
 
-        bool insert(int i, int j, int value)
+        bool insert(int i, int j, int value, int accessRow, int accessCol)
         {
             if(i<0 || i>=compactMatrix[0][0] || j<0 || j>=compactMatrix[0][1]) return false;
             compactMatrix[0][2]++;
             compactMatrix[compactMatrix[0][2]] = new int[3];
 
-            int r = compactMatrix[0][2] - 1;
+            int r = compactMatrix[0][2];
             while (r != 1 && (compactMatrix[r][0] > i || compactMatrix[r][1] > j))
             {
+                if(i == compactMatrix[r][0]) compactMatrix[r][3]++;
+                else if(j == compactMatrix[r][1]) compactMatrix[r][4]++;
+
                 compactMatrix[r + 1][0] = compactMatrix[r][0];
                 compactMatrix[r + 1][1] = compactMatrix[r][1];
                 compactMatrix[r + 1][2] = compactMatrix[r][2];
+                compactMatrix[r + 1][3] = compactMatrix[r][3];
+                compactMatrix[r + 1][4] = compactMatrix[r][4];
+
                 r--;
             }
 
-            compactMatrix[r + 1][0] = i;
-            compactMatrix[r + 1][1] = j;
-            compactMatrix[r + 1][2] = value;
+            compactMatrix[r][0] = i;
+            compactMatrix[r][1] = j;
+            compactMatrix[r][2] = value;
+            compactMatrix[r][3] = accessRow;
+            compactMatrix[r][4] = accessCol;
 
             return true;
         }
@@ -123,9 +113,15 @@ public:
 
             while (r != compactMatrix[0][2])
             {
+                if(i == compactMatrix[r+1][0]) compactMatrix[r+1][3]--;
+                else if(j == compactMatrix[r+1][1]) compactMatrix[r+1][4]--;
+
                 compactMatrix[r][0] = compactMatrix[r + 1][0];
                 compactMatrix[r][1] = compactMatrix[r + 1][1];
                 compactMatrix[r][2] = compactMatrix[r + 1][2];
+                compactMatrix[r][3] = compactMatrix[r + 1][3];
+                compactMatrix[r][4] = compactMatrix[r + 1][4];
+
                 r++;
             }
 
@@ -153,10 +149,13 @@ public:
             {
                 cout << "[" << compactMatrix[i][0] << ", ";
                 cout << compactMatrix[i][1] << ": ";
-                cout << compactMatrix[i][2] << "]\n";
+                cout << compactMatrix[i][2] << ", ";
+                cout << compactMatrix[i][3] << ": ";
+                cout << compactMatrix[i][4] << "]\n";
             }
             cout << "----------------------------------------\n";
         }
+
     };
 
 private:
@@ -199,10 +198,12 @@ private:
             decreamentSize();
         }
 
-        void addToRow(Node *newNode, int j)
+        int addToRow(Node *newNode, int j)
         {
             Node *t = this->getHeader()->getNextCollumn();
             Node *prev = this->getHeader();
+
+            int accessRow = 1;
 
             while (t != this->getTailer())
             {
@@ -210,6 +211,7 @@ private:
                 {
                     t = t->getNextCollumn();
                     prev = prev->getNextCollumn();
+                    accessRow++;
                 }
                 else break;
             }
@@ -217,18 +219,24 @@ private:
             newNode->setNextCollumn(t);
             prev->setNextCollumn(newNode);
             increamentSize();
+
+            return accessRow;
         }
 
-        void addToCollumn(Node *newNode, int i)
+        int addToCollumn(Node *newNode, int i)
         {
             Node *t = this->getHeader()->getNextRow();
             Node *prev = this->getHeader();
+
+            int accessCollumn = 1;
+
             while (t != this->getTailer())
             {
                 if (t->getRow() < i)
                 {
                     t = t->getNextRow();
                     prev = prev->getNextRow();
+                    accessCollumn++;
                 }
                 else break;
             }
@@ -236,6 +244,8 @@ private:
             newNode->setNextRow(t);
             prev->setNextRow(newNode);
             increamentSize();
+
+            return accessCollumn;
         }
     };
 
@@ -283,6 +293,7 @@ public:
         statue = false;
         this->Collumn = new LinkedList[nCollumn];
         size = 0;
+        this->sparseMatrix = new SparseMatrix(this);
     }
 
     LinkedList getRow(int i) { return Row[i]; };
@@ -298,13 +309,29 @@ public:
 
     Node *accessNode(int i, int j)
     {
-        Node *t = Row[i].getHeader()->getNextCollumn();
-        while (t != Row[i].getTailer())
-        {
-            if (t->getCollumn() == j) return t;
-            t = t->getNextCollumn();
+        int r = sparseMatrix->access(i, j, 0, sparseMatrix->getCompactMatrix()[0][2] + 1);
+        if (r == -1) return nullptr;
+
+        if(sparseMatrix->getCompactMatrix()[r][3] < sparseMatrix->getCompactMatrix()[r][4])
+        {          
+            Node *t = Row[i].getHeader()->getNextCollumn();
+            while (t != Row[i].getTailer())
+            {
+                if (t->getCollumn() == j) return t;
+                t = t->getNextCollumn();
+            }
+            return nullptr;
         }
-        return nullptr;
+        else
+        {
+            Node *t = Collumn[j].getHeader()->getNextRow();
+            while (t != Collumn[j].getTailer())
+            {
+                if (t->getRow() == j) return t;
+                t = t->getNextRow();
+            }
+            return nullptr;
+        }
     }
 
     bool insertNode(int i, int j, T value)
@@ -312,11 +339,11 @@ public:
         if (i > nRow || j > nCollumn) return false;
 
         Node *newNode = new Node(i, j, value);
-        this->Row[i].addToRow(newNode, j);
-        this->Collumn[j].addToCollumn(newNode, i);
+        int accessRow = this->Row[i].addToRow(newNode, j);
+        int accesscollumn = this->Collumn[j].addToCollumn(newNode, i);
         size++;
 
-        return sparseMatrix->insert(i, j, value);
+        return sparseMatrix->insert(i, j, value, accessRow, accesscollumn);
     }
 
     bool deleteNode(int i, int j)
@@ -411,19 +438,11 @@ void readCSV(Matrix<int> *matrix, string pathCSV)
         while (getline(s, T, ','))
         {
             int num = stoi(T);
-            if (num != 0)
-            {
-                Matrix<int>::Node *newNode = new Matrix<int>::Node(i, j, num);
-                matrix->getRow(i).addToRow(newNode, j);
-                matrix->getCol(j).addToCollumn(newNode, i);
-                matrix->incrementSize();
-            }
+            if (num != 0) matrix->insertNode(i, j, num);
             j++;
         }
         i++;
     }
-
-    matrix->setSparseMatrix();
 }
 
 void write(Matrix<int> *matrix)
