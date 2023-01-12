@@ -8,9 +8,9 @@
    - Implementation Algorithms for the shortest traverse to access the nodes in the link list with the help of Sparse Matrix Array
 
 **In the future? :D**
-Implementation Doubly Linked List for the Store for the Sparse Matrix
-Implementation fastest Algorithms for the shortest path and traverse to access the nodes 
-Implementation GUI user interface
+   - Implementation Doubly Linked List for the Store for the Sparse Matrix
+   - Implementation fastest Algorithms for the shortest path and traverse to access the nodes 
+   - Implementation GUI user interface
 
 **Information & Time Complexities:**
 
